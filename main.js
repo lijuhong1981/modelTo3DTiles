@@ -67,6 +67,22 @@ const argv = yargs
             type: "boolean",
             default: true,
         },
+        b3dm: {
+            describe: "以b3dm容器输出瓦片(3D Tiles经典格式,兼容传统前端);关闭(--no-b3dm)则输出glTF瓦片(3D Tiles 1.1)。",
+            type: "boolean",
+            default: true,
+        },
+        spatialSplit: {
+            describe: "按空间递归切分瓦片,空间聚集便于视锥剔除;关闭(--no-spatialSplit)则按材质顺序装填,适合单体小模型(不做几何切分、保留索引几何)。",
+            type: "boolean",
+            default: true,
+        },
+        textureAtlas: {
+            alias: "ta",
+            describe: "启用纹理图集优化:将可合并材质的贴图合成图集页并重映射UV,减少材质数与draw call。仅baseColor贴图、UV在[0,1]内的材质参与。",
+            type: "boolean",
+            default: false,
+        },
         merge: {
             alias: "m",
             describe: "设置是否合并材质相同的网格图元。",
@@ -165,6 +181,9 @@ const options = {
     rotation,
     lngLatAlt,
     correctCenter: argv.correctCenter,
+    b3dm: argv.b3dm,
+    spatialSplit: argv.spatialSplit,
+    textureAtlas: argv.textureAtlas,
     merge: argv.merge,
     tileSize: argv.tileSize,
     clampToGround: argv.clampToGround,

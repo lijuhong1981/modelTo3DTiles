@@ -28,10 +28,10 @@
     "draco3dgltf": "^1.5.7",
     "fs-extra": "^11.3.3",
     "gltf-pipeline": "^4.3.0",
-    "obj23dtiles": "^1.0.8",
     "obj2gltf": "^3.2.0",
     "path": "^0.12.7",
     "pkg": "^5.8.1",
+    "sharp": "^0.34.5",
     "three": "^0.182.0",
     "yargs": "17.7.2"
   },

@@ -26,6 +26,9 @@
 |--rotation|-r|手动设置模型旋转角度,<br>格式为[x,y,z],单位为度。<br>坐标轴朝向已自动归一化,<br>仅当模型存在轴向以外的偏转<br>(如偏离正北)时才需要设置。|String||否|
 |--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String||否|
 |--correctCenter|--cc|自动修正模型锚点至模型<br>包围盒中心点,<br>修正后经纬度对应包围盒中心。|Boolean|true|否|
+|--b3dm||以b3dm容器输出瓦片,<br>3D Tiles经典格式,兼容传统前端;<br>关闭则输出glTF瓦片(3D Tiles 1.1)。|Boolean|true|否|
+|--spatialSplit||按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>关闭则按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|Boolean|true|否|
+|--textureAtlas|--ta|启用纹理图集优化:<br>将可合并材质的贴图合成图集页<br>并重映射UV,<br>减少材质数与draw call。<br>仅baseColor贴图、UV在[0,1]内的<br>材质参与。|Boolean|false|否|
 |--merge|-m|设置是否合并材质相同的网格图元。|Boolean|true|否|
 |--tileSize||设置期望的单个瓦片存储容量,<br>单位mb。|Number|10|否|
 |--clampToGround|--ctg|设置模型是否自动贴地,<br>为true时altitude属性失效。|Boolean|true|否|
