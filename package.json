@@ -1,25 +1,59 @@
 {
   "name": "@lijuhong1981/modelto3dtiles",
-  "version": "1.1.4",
+  "version": "2.0.0",
+  "description": "将obj/fbx/gltf/glb精细模型转换为3D Tiles的命令行工具,面向Cesium加载,支持空间切分、纹理图集、Draco压缩与构件级拾取",
   "main": "main.js",
-  "bin": "main.js",
+  "bin": {
+    "modelTo3DTiles": "main.js"
+  },
   "type": "commonjs",
+  "files": [
+    "main.js",
+    "lib/",
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "npm run build:esbuild && npm run build:pkg",
     "build:clean": "rimraf dist && rimraf modelTo3DTiles.exe",
     "build:esbuild": "rimraf dist && node esbuild.config.js dev",
-    "build:pkg": "rimraf modelTo3DTiles.exe && pkg . --targets node18-win-x64 --output modelTo3DTiles.exe --options max-old-space-size=24576",
+    "build:pkg": "rimraf modelTo3DTiles.exe && pkg . --targets node22-win-x64 --output modelTo3DTiles.exe --options max-old-space-size=24576",
+    "prepublishOnly": "npm run build:esbuild",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "pkg": {
     "assets": [
-      "node_modules/cesium/Build/CesiumUnminified/**/*"
+      "node_modules/cesium/Build/CesiumUnminified/**/*",
+      "node_modules/draco3d/*.wasm",
+      "node_modules/draco3dgltf/*.wasm"
     ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "3d-tiles",
+    "cesium",
+    "obj",
+    "fbx",
+    "gltf",
+    "glb",
+    "b3dm",
+    "draco",
+    "converter",
+    "cli"
+  ],
+  "author": "lijuhong1981",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lijuhong1981/modelTo3DTiles.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lijuhong1981/modelTo3DTiles/issues"
+  },
+  "homepage": "https://github.com/lijuhong1981/modelTo3DTiles#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@gltf-transform/core": "^4.3.0",
     "@gltf-transform/extensions": "^4.3.0",
@@ -30,12 +64,12 @@
     "gltf-pipeline": "^4.3.0",
     "obj2gltf": "^3.2.0",
     "path": "^0.12.7",
-    "pkg": "^5.8.1",
     "sharp": "^0.34.5",
     "three": "^0.182.0",
     "yargs": "17.7.2"
   },
   "devDependencies": {
+    "@yao-pkg/pkg": "^6.22.0",
     "esbuild": "^0.27.2",
     "npm-run-all": "^4.1.5",
     "rimraf": "^5.0.10"

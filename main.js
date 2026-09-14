@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 const path = require("path");
 const v8 = require('v8');
