@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>modelTo3DTiles 原始模型对比查看器 (three.js)</title>
+    <style>
+        html, body, #container { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        #panel {
+            position: absolute; top: 12px; left: 12px; z-index: 1;
+            background: rgba(30, 34, 40, 0.88); color: #e8eaed;
+            padding: 12px 14px; border-radius: 8px; font: 13px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif;
+            min-width: 250px; max-height: calc(100% - 24px); overflow-y: auto;
+        }
+        #panel h1 { font-size: 14px; margin: 0 0 8px; }
+        #panel button {
+            background: #3d73dd; color: #fff; border: none; border-radius: 4px;
+            padding: 4px 10px; margin: 2px 4px 2px 0; cursor: pointer; font-size: 12px;
+        }
+        #panel button:hover { background: #5589f0; }
+        #panel button.active { background: #1f4fa8; }
+        #panel label { display: block; margin-top: 4px; cursor: pointer; user-select: none; }
+        #stats { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.2); white-space: pre; font-family: Consolas, monospace; font-size: 12px; }
+        #error { color: #ff7b72; white-space: pre-wrap; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../node_modules/three/build/three.module.js",
+                "three/addons/": "../node_modules/three/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="panel">
+        <h1>原始模型 vs 转换结果对比</h1>
+        <div id="models"></div>
+        <label><input type="checkbox" id="chkZUp" checked> 原始OBJ按Z-up摆放</label>
+        <label><input type="checkbox" id="chkWire"> 线框模式</label>
+        <div id="stats"></div>
+        <div id="error"></div>
+    </div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        // /source/ 路径由 test/server.js 映射到原始模型目录（SOURCE_ROOT环境变量）
+        const OBJ_DIR = '/source/140202002000000-自助票务处理机-A_20260115104552';
+        const MODELS = [
+            { name: '原始OBJ 票务机', type: 'obj', zUp: true,
+              url: `${OBJ_DIR}/140202002000000-自助票务处理机-A.obj`,
+              mtl: `${OBJ_DIR}/140202002000000-自助票务处理机-A.mtl` },
+            { name: '转换后 OBJ', type: 'tiles', url: '../test-output/obj-up/tileset.json' },
+            { name: '原始FBX 赛事中心2F', type: 'fbx', url: '/source/赛事指挥中心_2F土建.FBX' },
+            { name: '转换后 FBX', type: 'tiles', url: '../test-output/fbx-up/tileset.json' },
+            { name: '原始glTF 奥体中心', type: 'gltf', url: '/source/aoti/aoti.gltf' },
+            { name: '转换后 glTF', type: 'tiles', url: '../test-output/gltf-up/tileset.json' },
+        ];
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(devicePixelRatio);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1c2229);
+        const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.01, 100000);
+        camera.position.set(5, 3, 5);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // 灯光：原始模型的Phong/Standard材质需要光照
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x44505a, 1.2));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        let grid = null, axesHelper = null, modelGroup = null, wireframe = false;
+        let currentModel = MODELS[0];
+        const statsEl = document.getElementById('stats');
+        const errorEl = document.getElementById('error');
+        const fmt = v => (v ?? 0).toLocaleString();
+
+        function loadAsync(loader, url) {
+            return new Promise((resolve, reject) =>
+                loader.load(encodeURI(url), resolve, undefined, reject));
+        }
+
+        async function loadModel(model) {
+            currentModel = model;
+            if (modelGroup) { scene.remove(modelGroup); modelGroup = null; }
+            errorEl.textContent = '加载中...';
+            const group = new THREE.Group();
+            try {
+                if (model.type === 'obj') {
+                    const mtlLoader = new MTLLoader();
+                    mtlLoader.setResourcePath(encodeURI(model.url.slice(0, model.url.lastIndexOf('/') + 1)));
+                    const materials = await loadAsync(mtlLoader, model.mtl);
+                    materials.preload();
+                    const objLoader = new OBJLoader();
+                    objLoader.setMaterials(materials);
+                    group.add(await loadAsync(objLoader, model.url));
+                } else if (model.type === 'fbx') {
+                    group.add(await loadAsync(new FBXLoader(), model.url));
+                } else if (model.type === 'gltf') {
+                    const gltf = await loadAsync(new GLTFLoader(), model.url);
+                    group.add(gltf.scene);
+                } else if (model.type === 'tiles') {
+                    // 转换结果：把瓦片目录下所有Tile glb作为普通GLB加载，与原始模型直接对比
+                    const resp = await fetch(model.url);
+                    const tileset = await resp.json();
+                    const gltfLoader = new GLTFLoader();
+                    const dir = model.url.slice(0, model.url.lastIndexOf('/') + 1);
+                    for (const child of tileset.root.children) {
+                        const gltf = await loadAsync(gltfLoader, dir + child.content.uri);
+                        group.add(gltf.scene);
+                    }
+                }
+                errorEl.textContent = '';
+                applyZUp(group, model);
+                applyWireframe(group);
+                scene.add(group);
+                modelGroup = group;
+                frameModel(group);
+                updateStats(group, model);
+            } catch (e) {
+                errorEl.textContent = '加载失败: ' + e.message;
+            }
+        }
+
+        // 原始OBJ为Z-up数据时，旋转-90°X摆放为Y-up正视（转换工具内部也做同样的归一化）
+        function applyZUp(group, model) {
+            if (model && model.zUp)
+                group.rotation.x = document.getElementById('chkZUp').checked ? -Math.PI / 2 : 0;
+        }
+
+        function applyWireframe(group) {
+            group.traverse(o => {
+                if (o.isMesh) {
+                    const mats = Array.isArray(o.material) ? o.material : [o.material];
+                    mats.forEach(m => m.wireframe = wireframe);
+                }
+            });
+        }
+
+        // 按包围盒取景并放置网格地面
+        function frameModel(group) {
+            const box = new THREE.Box3().setFromObject(group);
+            if (box.isEmpty()) return;
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            if (grid) scene.remove(grid);
+            const gridSize = Math.max(maxDim * 1.5, 10);
+            grid = new THREE.GridHelper(gridSize, 20, 0x3d73dd, 0x2a333d);
+            grid.position.set(center.x, box.min.y, center.z);
+            scene.add(grid);
+            if (axesHelper) scene.remove(axesHelper);
+            axesHelper = new THREE.AxesHelper(maxDim * 0.6);
+            axesHelper.position.set(center.x, box.min.y, center.z);
+            scene.add(axesHelper);
+            camera.near = maxDim / 1000;
+            camera.far = maxDim * 100;
+            camera.updateProjectionMatrix();
+            const dist = maxDim * 1.2;
+            camera.position.set(center.x + dist * 0.7, center.y + dist * 0.5, center.z + dist * 0.7);
+            controls.target.copy(center);
+        }
+
+        function updateStats(group, model) {
+            let vertices = 0, triangles = 0, meshes = 0;
+            group.traverse(o => {
+                if (o.isMesh && o.geometry) {
+                    meshes++;
+                    const pos = o.geometry.attributes.position;
+                    if (pos) vertices += pos.count;
+                    triangles += (o.geometry.index ? o.geometry.index.count : (pos ? pos.count : 0)) / 3;
+                }
+            });
+            statsEl.textContent =
+                `模型: ${model.name}\n网格: ${fmt(meshes)}\n顶点: ${fmt(vertices)}\n三角面: ${fmt(triangles)}`;
+        }
+
+        const btnBox = document.getElementById('models');
+        MODELS.forEach(m => {
+            const b = document.createElement('button');
+            b.textContent = m.name;
+            b.onclick = () => {
+                document.querySelectorAll('#models button').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                loadModel(m);
+            };
+            btnBox.appendChild(b);
+        });
+
+        document.getElementById('chkZUp').onchange = () => { if (modelGroup) { applyZUp(modelGroup, currentModel); frameModel(modelGroup); } };
+        document.getElementById('chkWire').onchange = e => { wireframe = e.target.checked; if (modelGroup) applyWireframe(modelGroup); };
+
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        (function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        })();
+
+        btnBox.children[0].click();
+    </script>
+</body>
+</html>

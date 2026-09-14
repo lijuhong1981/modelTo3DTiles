@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>modelTo3DTiles 测试页</title>
+    <script src="../node_modules/cesium/Build/Cesium/Cesium.js"></script>
+    <link href="../node_modules/cesium/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        #panel {
+            position: absolute; top: 12px; left: 12px; z-index: 1;
+            background: rgba(30, 34, 40, 0.88); color: #e8eaed;
+            padding: 12px 14px; border-radius: 8px; font: 13px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif;
+            min-width: 260px;
+        }
+        #panel h1 { font-size: 14px; margin: 0 0 8px; }
+        #panel button {
+            background: #3d73dd; color: #fff; border: none; border-radius: 4px;
+            padding: 4px 10px; margin: 2px 4px 2px 0; cursor: pointer; font-size: 12px;
+        }
+        #panel button:hover { background: #5589f0; }
+        #panel button.active { background: #1f4fa8; }
+        #panel label { display: block; margin-top: 4px; cursor: pointer; user-select: none; }
+        #stats { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.2); white-space: pre; font-family: Consolas, monospace; font-size: 12px; }
+        #error { color: #ff7b72; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <div id="panel">
+        <h1>modelTo3DTiles 测试</h1>
+        <div id="tilesets"></div>
+        <label><input type="checkbox" id="chkBox"> 显示包围盒 (boundingVolume)</label>
+        <label><input type="checkbox" id="chkAxes" checked> 显示锚点与ENU轴</label>
+        <label><input type="checkbox" id="chkInside" checked> 允许进入模型内部<br>(关闭相机与地面碰撞)</label>
+        <label><input type="checkbox" id="chkFps"> 显示帧率</label>
+        <div id="stats"></div>
+        <div id="pick" style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.2); font-family:Consolas,monospace; font-size:12px; white-space:pre-wrap; max-width:280px;"></div>
+        <div id="error"></div>
+    </div>
+    <script>
+        // 可在此追加要测试的瓦片输出目录（位于仓库根的 test-output/ 下）
+        const TILESETS = [
+            { name: 'OBJ 自助票务处理机', dir: 'obj-feat' },
+            { name: 'FBX 赛事指挥中心2F', dir: 'fbx-feat' },
+            { name: 'glTF 奥体中心', dir: 'gltf-feat' },
+        ];
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            // 使用Cesium内置的离线影像(NaturalEarthII)，无需ion token
+            baseLayer: Cesium.ImageryLayer.fromProviderAsync(
+                Cesium.TileMapServiceImageryProvider.fromUrl(
+                    Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII'))
+            ),
+            baseLayerPicker: false, geocoder: false, timeline: false, animation: false,
+            sceneModePicker: false, navigationHelpButton: false, infoBox: false, selectionIndicator: false,
+        });
+        // 影像未加载区域的兜底色
+        viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#4a5a68');
+        // 默认允许飞入模型内部（关闭相机与地面/地形的碰撞检测）
+        viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
+
+        let tileset = null;
+        const statsEl = document.getElementById('stats');
+        const errorEl = document.getElementById('error');
+
+        /**
+         * 绘制瓦片集的锚点与ENU坐标轴：
+         * 锚点 = 根节点transform平移分量（即lngLatAlt对应的ENU原点，correctCenter后为模型包围盒中心）
+         * 三轴 = transform旋转矩阵的三个列向量（X东/Y北/Z天）
+         */
+        function addAnchorAxes(tileset) {
+            viewer.entities.removeAll();
+            const m = tileset.root.transform;
+            const origin = Cesium.Matrix4.getTranslation(m, new Cesium.Cartesian3());
+            const axisLength = tileset.boundingSphere.radius;
+            const axes = [
+                { name: 'X 东', column: 0, color: Cesium.Color.RED },
+                { name: 'Y 北', column: 1, color: Cesium.Color.LIME },
+                { name: 'Z 天', column: 2, color: Cesium.Color.DODGERBLUE },
+            ];
+            axes.forEach(axis => {
+                const dir = Cesium.Matrix4.getColumn(m, axis.column, new Cesium.Cartesian3());
+                Cesium.Cartesian3.normalize(dir, dir);
+                const end = Cesium.Cartesian3.multiplyByScalar(dir, axisLength, new Cesium.Cartesian3());
+                Cesium.Cartesian3.add(origin, end, end);
+                viewer.entities.add({
+                    show: document.getElementById('chkAxes').checked,
+                    polyline: {
+                        positions: [origin, end],
+                        width: 3,
+                        material: axis.color,
+                    },
+                    position: end,
+                    label: {
+                        text: axis.name,
+                        font: '14px sans-serif',
+                        fillColor: axis.color,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        pixelOffset: new Cesium.Cartesian2(0, -10),
+                        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                    },
+                });
+            });
+            viewer.entities.add({
+                show: document.getElementById('chkAxes').checked,
+                position: origin,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.YELLOW,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                },
+                label: {
+                    text: '锚点',
+                    font: '13px sans-serif',
+                    fillColor: Cesium.Color.YELLOW,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(14, -14),
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                },
+            });
+        }
+
+        async function loadTileset(dir) {
+            if (tileset) { viewer.scene.primitives.remove(tileset); tileset = null; }
+            errorEl.textContent = '';
+            try {
+                tileset = await Cesium.Cesium3DTileset.fromUrl(`../test-output/${dir}/tileset.json`, {
+                    debugShowBoundingVolume: document.getElementById('chkBox').checked,
+                    skipLevelOfDetail: false,
+                });
+                viewer.scene.primitives.add(tileset);
+                await viewer.zoomTo(tileset);
+                addAnchorAxes(tileset);
+            } catch (e) {
+                errorEl.textContent = '加载失败: ' + e.message;
+            }
+            document.querySelectorAll('#tilesets button').forEach(b => b.classList.toggle('active', b.dataset.dir === dir));
+        }
+
+        const btnBox = document.getElementById('tilesets');
+        TILESETS.forEach(t => {
+            const b = document.createElement('button');
+            b.textContent = t.name; b.dataset.dir = t.dir;
+            b.onclick = () => loadTileset(t.dir);
+            btnBox.appendChild(b);
+        });
+
+        document.getElementById('chkBox').onchange = e => { if (tileset) tileset.debugShowBoundingVolume = e.target.checked; };
+        document.getElementById('chkAxes').onchange = e => viewer.entities.values.forEach(en => en.show = e.target.checked);
+        document.getElementById('chkInside').onchange = e => { viewer.scene.screenSpaceCameraController.enableCollisionDetection = !e.target.checked; };
+
+        // 构件拾取：点击模型显示feature属性（EXT_mesh_features），再次点击同构件则高亮
+        const pickEl = document.getElementById('pick');
+        let highlighted = null;
+        const handler = new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+        handler.setInputAction(movement => {
+            const picked = viewer.scene.pick(movement.position);
+            if (highlighted) {
+                highlighted.color = Cesium.Color.WHITE;
+                highlighted = null;
+            }
+            if (picked instanceof Cesium.Cesium3DTileFeature) {
+                const names = picked.getPropertyIds();
+                const text = names.map(n => `${n}: ${picked.getProperty(n)}`).join('\n');
+                pickEl.textContent = `拾取 feature #${picked.featureId}\n${text}`;
+                picked.color = Cesium.Color.fromCssColorString('#ff4444');
+                highlighted = picked;
+            } else {
+                pickEl.textContent = picked ? '拾取到: ' + (picked.primitive && picked.primitive.constructor.name || '对象') : '';
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        document.getElementById('chkFps').onchange = e => { viewer.scene.debugShowFramesPerSecond = e.target.checked; };
+
+        // 统计信息每秒刷新一次（字段名以Cesium实际版本为准，做undefined兜底）
+        const fmt = v => (v ?? 0).toLocaleString();
+        setInterval(() => {
+            if (!tileset) { statsEl.textContent = ''; return; }
+            const s = tileset.statistics;
+            statsEl.textContent =
+                `就绪瓦片: ${fmt(s.numberOfTilesWithContentReady)} / ${fmt(s.numberOfTilesTotal)}\n` +
+                `本帧 选中/访问/指令: ${fmt(s.selected)} / ${fmt(s.visited)} / ${fmt(s.numberOfCommands)}\n` +
+                `三角形: ${fmt(s.numberOfTrianglesSelected)}\n` +
+                `贴图内存: ${((s.texturesByteLength ?? 0) / 1048576).toFixed(1)} MB\n` +
+                `几何内存: ${((s.geometryByteLength ?? 0) / 1048576).toFixed(1)} MB`;
+        }, 1000);
+
+        // 默认加载URL参数 ?t=目录名 指定的瓦片，否则第一个
+        const param = new URLSearchParams(location.search).get('t');
+        loadTileset(param && TILESETS.some(t => t.dir === param) ? param : TILESETS[0].dir);
+    </script>
+</body>
+</html>
