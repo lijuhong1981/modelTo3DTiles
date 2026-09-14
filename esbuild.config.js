@@ -7,14 +7,15 @@ const copyDracoWasmPlugin = {
   name: 'copy-draco-wasm',
   setup(build) {
     build.onEnd(() => {
-      // 需要复制的 Draco WASM 文件列表
+      // 需要复制的 Draco WASM 文件列表（来自不同包：draco3dgltf为gltf输入解码,draco3d为gltf-pipeline压缩用）
       const wasmFiles = [
-        'draco_decoder_gltf.wasm',
-        'draco_encoder.wasm'
+        { package: 'draco3dgltf', fileName: 'draco_decoder_gltf.wasm' },
+        { package: 'draco3d', fileName: 'draco_decoder.wasm' },
+        { package: 'draco3dgltf', fileName: 'draco_encoder.wasm' },
       ];
 
-      wasmFiles.forEach(fileName => {
-        const sourcePath = path.join(__dirname, 'node_modules', 'draco3dgltf', fileName);
+      wasmFiles.forEach(({ package: packageName, fileName }) => {
+        const sourcePath = path.join(__dirname, 'node_modules', packageName, fileName);
         const destPath = path.join(__dirname, 'dist', fileName);
 
         try {

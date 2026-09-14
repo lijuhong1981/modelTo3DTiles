@@ -1,5 +1,5 @@
 {
-  "name": "model-to-3dtiles",
+  "name": "@lijuhong1981/modelto3dtiles",
   "version": "1.1.4",
   "main": "main.js",
   "bin": "main.js",

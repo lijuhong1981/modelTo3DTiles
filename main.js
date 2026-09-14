@@ -90,6 +90,11 @@ const argv = yargs
             type: "boolean",
             default: false,
         },
+        draco: {
+            describe: "启用Draco几何压缩(KHR_draco_mesh_compression),瓦片体积大幅下降,加载端由Cesium自动解码;含featureId属性,与构件拾取兼容。",
+            type: "boolean",
+            default: false,
+        },
         mergePrimitive: {
             alias: "mp",
             describe: "设置是否合并材质相同的网格图元。",
@@ -193,6 +198,7 @@ const options = {
     spatialSplit: argv.spatialSplit,
     textureAtlas: argv.textureAtlas,
     resampleTextures: argv.resampleTextures,
+    draco: argv.draco,
     mergePrimitive: argv.mergePrimitive,
     tileSize: argv.tileSize,
     clampToGround: argv.clampToGround,
