@@ -67,9 +67,9 @@ node main.js -i ./model.obj
 |--version|-v|显示版本号|Boolean||否|
 |--input|-i|输入模型路径|String||是|
 |--output|-o|模型输出目录,<br>不填则在模型文件目录下自动创建一个3dtiles目录。|String||否|
-|--inputUpAxis|--iua|设置输入模型的向上坐标轴,<br>obj默认按Z-up处理并自动转换,<br>fbx默认读取文件GlobalSettings声明的UpAxis,<br>gltf/glb按规范固定为Y-up。|String|见描述|否|
+|--inputUpAxis|--iua|设置输入模型的向上坐标轴,<br>[可选值:X,Y,Z,-X,-Y,-Z]<br>obj默认按Z-up处理并自动转换,<br>fbx默认读取文件GlobalSettings声明的UpAxis,<br>gltf/glb按规范固定为Y-up。|String|见描述|否|
 |--rotation|-r|手动设置模型旋转角度,<br>格式为[x,y,z],单位为度。<br>坐标轴朝向已自动归一化,<br>仅当模型存在轴向以外的偏转<br>(如偏离正北)时才需要设置。|String||否|
-|--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String||否|
+|--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String|116.4074,<br>39.9042,0|否|
 |--correctCenter|--cc|自动修正模型锚点至模型<br>包围盒中心点,<br>修正后经纬度对应包围盒中心。|Boolean|true|否|
 |--b3dm||以b3dm容器输出瓦片,<br>3D Tiles经典格式,兼容传统前端;<br>关闭则输出glTF瓦片(3D Tiles 1.1)。|Boolean|true|否|
 |--spatialSplit|-ss|按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>关闭则按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|Boolean|true|否|
@@ -80,6 +80,8 @@ node main.js -i ./model.obj
 |--tileSize|-ts|设置期望的单个瓦片存储容量,<br>单位mb。|Number|10|否|
 |--clampToGround|--ctg|设置模型是否自动贴地,<br>为true时altitude属性失效。|Boolean|true|否|
 |--noneTransform|--nt|是否不设置模型变换矩阵,<br>为true时lngLatAlt、clampToGround等<br>属性失效。|Boolean|false|否|
+
+另有面向 obj 材质转换的高级参数(透传自 obj2gltf,一般无需设置):`--checkTransparency`、`--packOcclusion`、`--metallicRoughness`、`--specularGlossiness`、`--unlit`,详见 `modelTo3DTiles -h`。
 
 ## 输出结构
 
@@ -117,6 +119,8 @@ handler.setInputAction(movement => {
 npm install
 npm run build        # esbuild打包 + pkg封装为 node22-win-x64 可执行文件
 ```
+
+产物约 210MB(内嵌 Node 运行时、Cesium 资源与 Draco/图像原生库),首次构建需从网络下载 Node 运行时。
 
 ## License
 
