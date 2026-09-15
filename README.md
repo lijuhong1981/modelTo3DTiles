@@ -38,18 +38,24 @@ npm run build:esbuild
 
 ## 使用
 
+npm 全局安装或 exe 方式下,直接使用 `modelTo3DTiles` 命令:
+
 ```bash
 # 基本转换(obj/fbx/gltf/glb 均可),默认已启用纹理图集与Draco压缩
-node main.js -i ./model.obj
+modelTo3DTiles -i ./model.obj
 
 # 指定输出目录与经纬度(默认 116.4074,39.9042)
-node main.js -i ./model.fbx -o ./output --lla 106.55,29.56,0
+modelTo3DTiles -i ./model.fbx -o ./output --lla 106.55,29.56,0
 
 # 追求最高画质、加载端零解码开销:关闭Draco压缩与纹理图集
-node main.js -i ./model.gltf -o ./output --no-draco --no-ta
+modelTo3DTiles -i ./model.gltf -o ./output --no-draco --no-ta
 ```
 
-exe 与 npm 全局安装的用法相同,将 `node main.js` 换为 `modelTo3DTiles`,所有参数均可使用。
+从源码运行时,将命令换为 `node main.js`,参数完全相同:
+
+```bash
+node main.js -i ./model.obj
+```
 
 输入模型向上坐标轴自动识别与转换:obj 默认按 Z-up 处理(可用 `--inputUpAxis` 指定),fbx 读取文件 GlobalSettings 声明的 UpAxis,gltf/glb 按规范固定 Y-up。
 
