@@ -75,7 +75,7 @@ node main.js -i ./model.obj
 |--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String|116.4074,<br>39.9042,0|否|
 |--correctCenter|--cc|自动修正模型锚点至模型<br>包围盒中心点,<br>修正后经纬度对应包围盒中心。|Boolean|true|否|
 |--b3dm||以b3dm容器输出瓦片,<br>3D Tiles经典格式,兼容传统前端;<br>关闭则输出glTF瓦片(3D Tiles 1.1)。|Boolean|true|否|
-|--spatialSplit|-ss|按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>关闭则按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|Boolean|true|否|
+|--split||设置瓦片拆分方式,<br>[可选值:spatial,material]<br>spatial按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>material按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|String|spatial|否|
 |--textureAtlas|--ta|启用纹理图集优化:<br>将可合并材质的贴图按尺寸分桶<br>合成2的幂网格图集页并重映射UV,<br>减少材质数与draw call;<br>非2的幂贴图重采样至最近2的幂。<br>仅baseColor贴图、UV在[0,1]内的<br>材质参与合并。|Boolean|true|否|
 |--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|true|否|
 |--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|true|否|
@@ -88,11 +88,11 @@ node main.js -i ./model.obj
 
 ## 调参建议
 
-瓦片策略(`--spatialSplit` / `--tileSize`)的收益取决于**浏览方式**,按场景选择:
+瓦片策略(`--split` / `--tileSize`)的收益取决于**浏览方式**,按场景选择:
 
 | 场景 | 推荐配置 | 原因 |
 |---|---|---|
-| 全景展示、单体小模型(如单台设备) | `--no-ss` | 按材质顺序装填,draw call 恒为材质数(理论下限),文件最小 |
+| 全景展示、单体小模型(如单台设备) | `--split material` | 按材质顺序装填,draw call 恒为材质数(理论下限),文件最小 |
 | 大场景漫游、室内浏览 | 默认空间切分 | 视野收窄时只绘制可见瓦片,draw call 持续下降 |
 | 大模型 + 深度漫游 | `--ts 2~4` | 空间切分的收益 = 瓦片粒度 × 视野占比,百米级模型默认 10MB 粒度偏粗,调小后视锥剔除更敏感 |
 

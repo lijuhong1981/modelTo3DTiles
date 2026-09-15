@@ -73,11 +73,11 @@ const argv = yargs
             type: "boolean",
             default: true,
         },
-        spatialSplit: {
-            alias: "ss",
-            describe: "按空间递归切分瓦片,空间聚集便于视锥剔除;关闭则按材质顺序装填,适合单体小模型(不做几何切分、保留索引几何)。",
-            type: "boolean",
-            default: true,
+        split: {
+            describe: "设置瓦片拆分方式:spatial按空间递归切分,空间聚集便于视锥剔除;material按材质顺序装填,适合单体小模型(不做几何切分、保留索引几何)。",
+            choices: ["spatial", "material"],
+            type: "string",
+            default: "spatial",
         },
         textureAtlas: {
             alias: "ta",
@@ -197,7 +197,7 @@ const options = {
     lngLatAlt,
     correctCenter: argv.correctCenter,
     b3dm: argv.b3dm,
-    spatialSplit: argv.spatialSplit,
+    split: argv.split,
     textureAtlas: argv.textureAtlas,
     resampleTextures: argv.resampleTextures,
     draco: argv.draco,
