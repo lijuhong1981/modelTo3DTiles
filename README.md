@@ -105,7 +105,7 @@ output/
 ├── tileset.json      # 3D Tiles 入口
 ├── Tile-0.b3dm       # 瓦片内容(b3dm或glb)
 ├── Tile-1.b3dm
-└── textures/         # 外置共享贴图(--textureAtlas时含图集页)
+└── textures/         # 外置共享贴图与图集页
 ```
 
 **注意**:`textures/` 目录与瓦片文件必须整体分发,不可只拷贝 `.b3dm` 文件。
@@ -127,6 +127,8 @@ handler.setInputAction(movement => {
     }
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 ```
+
+版本要求:CesiumJS ≥ 1.104(`Cesium3DTileset.fromUrl` API);构件级拾取(EXT_mesh_features)需 ≥ 1.97,建议直接使用最新版。
 
 ## 在 threejs 中使用
 
