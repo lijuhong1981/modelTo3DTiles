@@ -74,6 +74,7 @@ const argv = yargs
             default: true,
         },
         split: {
+            alias: "s",
             describe: "设置瓦片拆分方式:spatial按空间递归切分,空间聚集便于视锥剔除;material按材质顺序装填,适合单体小模型(不做几何切分、保留索引几何)。",
             choices: ["spatial", "material"],
             type: "string",
