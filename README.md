@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@lijuhong1981%2Fmodelto3dtiles)](https://www.npmjs.com/package/@lijuhong1981/modelto3dtiles)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-将普通精细模型转换为 [3D Tiles](https://github.com/CesiumGS/3d-tiles) 的命令行工具,可在 [Cesium](https://cesium.com/platform/cesiumjs/) 或 [three.js](https://threejs.org/) 中加载,支持 `.obj`、`.fbx`、`.gltf`、`.glb` 格式。
+将普通精细模型转换为 [3D Tiles](https://github.com/CesiumGS/3d-tiles) 的命令行工具,可在 [Cesium](https://cesium.com/platform/cesiumjs/) 或 [threejs](https://threejs.org/) 中加载,支持 `.obj`、`.fbx`、`.gltf`、`.glb` 格式。
 
 ## 特性
 
@@ -116,7 +116,7 @@ handler.setInputAction(movement => {
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 ```
 
-## 在 three.js 中使用
+## 在 threejs 中使用
 
 两种方式,按场景选择。
 
@@ -161,7 +161,7 @@ tiles.update();
 
 - 启用 `--draco` 时务必配置 `DRACOLoader`(b3dm 容器需自行剥离 28 字节头再交由 GLTFLoader,建议直接用 `--no-b3dm`);
 - `textures/` 目录需与瓦片同目录部署(外置贴图按相对路径解析);
-- 构件拾取扩展(`EXT_mesh_features`)three.js 不识别会忽略,构件名保留在 glTF 节点名中,可按 `object.name` 检索。
+- 构件拾取扩展(`EXT_mesh_features`)threejs 不识别会忽略,构件名保留在 glTF 节点名中,可按 `object.name` 检索。
 
 ## 从源码构建 exe
 
