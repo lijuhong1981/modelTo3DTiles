@@ -27,7 +27,8 @@
       "dist/*.wasm",
       "node_modules/cesium/Build/CesiumUnminified/**/*",
       "node_modules/draco3d/*.wasm",
-      "node_modules/draco3dgltf/*.wasm"
+      "node_modules/draco3dgltf/*.wasm",
+      "node_modules/@img/**/*"
     ]
   },
   "keywords": [

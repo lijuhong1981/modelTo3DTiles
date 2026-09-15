@@ -49,9 +49,7 @@ node main.js -i ./model.fbx -o ./output --lla 106.55,29.56,0
 node main.js -i ./model.gltf -o ./output --textureAtlas --draco
 ```
 
-exe 与 npm 全局安装的用法相同,将 `node main.js` 换为 `modelTo3DTiles`。
-
-**exe 限制**:`--textureAtlas` / `--resampleTextures` 依赖原生图像库,独立 exe 未内置,使用这两个参数请通过 npm 方式安装运行;其余功能(含 `--draco`)exe 均支持。
+exe 与 npm 全局安装的用法相同,将 `node main.js` 换为 `modelTo3DTiles`,所有参数均可使用。
 
 输入模型向上坐标轴自动识别与转换:obj 默认按 Z-up 处理(可用 `--inputUpAxis` 指定),fbx 读取文件 GlobalSettings 声明的 UpAxis,gltf/glb 按规范固定 Y-up。
 
