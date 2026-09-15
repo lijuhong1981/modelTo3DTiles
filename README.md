@@ -113,6 +113,53 @@ handler.setInputAction(movement => {
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 ```
 
+## 在 three.js 中使用
+
+两种方式,按场景选择。
+
+**方式一:直接加载瓦片 GLB**(简单场景,自行管理相机与剔除)
+
+转换时用 `--no-b3dm` 输出 glTF 瓦片,遍历 `tileset.json` 逐个加载合成。输出为模型局部坐标系(米,Y-up),不含地理定位,需自行摆放:
+
+```js
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// 默认开启的Draco压缩需要配置解码器
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+const loader = new GLTFLoader();
+loader.setDRACOLoader(dracoLoader);
+
+const group = new THREE.Group();
+const tileset = await (await fetch('output/tileset.json')).json();
+for (const child of tileset.root.children) {
+    const gltf = await loader.loadAsync('output/' + child.content.uri);
+    group.add(gltf.scene);
+}
+scene.add(group);
+```
+
+**方式二:经 [3d-tiles-renderer](https://github.com/NASA-AMMOS/3d-tiles-renderer) 加载完整 tileset**(需要瓦片调度、视锥剔除时)
+
+```js
+import { TilesRenderer } from '3d-tiles-renderer';
+
+const tiles = new TilesRenderer('output/tileset.json');
+tiles.setCamera(camera);
+tiles.setResolutionFromRenderer(renderer);
+scene.add(tiles.group);
+
+// 渲染循环中更新
+tiles.update();
+```
+
+说明:
+
+- 启用 `--draco` 时务必配置 `DRACOLoader`(b3dm 容器需自行剥离 28 字节头再交由 GLTFLoader,建议直接用 `--no-b3dm`);
+- `textures/` 目录需与瓦片同目录部署(外置贴图按相对路径解析);
+- 构件拾取扩展(`EXT_mesh_features`)three.js 不识别会忽略,构件名保留在 glTF 节点名中,可按 `object.name` 检索。
+
 ## 从源码构建 exe
 
 ```bash
