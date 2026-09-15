@@ -75,10 +75,10 @@ const argv = yargs
         },
         split: {
             alias: "s",
-            describe: "设置瓦片拆分方式:spatial按空间递归切分,空间聚集便于视锥剔除;material按材质顺序装填,适合单体小模型(不做几何切分、保留索引几何)。",
+            describe: "设置瓦片拆分方式:material按材质顺序装填(默认,适合单精度精细模型,draw call恒为材质数、体积最小、加载最快);spatial按空间递归切分并生成LOD层级瓦片(远景渲染粗层、近景refine细层,适合大体量场景的漫游剔除,体积约为material的4倍,同精度模型下收益有限,待多精度简化引入后完全兑现)。",
             choices: ["spatial", "material"],
             type: "string",
-            default: "spatial",
+            default: "material",
         },
         textureAtlas: {
             alias: "ta",

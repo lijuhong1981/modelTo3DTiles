@@ -75,7 +75,7 @@ node main.js -i ./model.obj
 |--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String|116.4074,<br>39.9042,0|否|
 |--correctCenter|--cc|自动修正模型锚点至模型<br>包围盒中心点,<br>修正后经纬度对应包围盒中心。|Boolean|true|否|
 |--b3dm||以b3dm容器输出瓦片,<br>3D Tiles经典格式,兼容传统前端;<br>关闭则输出glTF瓦片(3D Tiles 1.1)。|Boolean|true|否|
-|--split|-s|设置瓦片拆分方式,<br>[可选值:spatial,material]<br>spatial按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>material按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|String|spatial|否|
+|--split|-s|设置瓦片拆分方式,<br>[可选值:spatial,material]<br>material按材质顺序装填<br>(默认,适合单精度精细模型,<br>draw call恒为材质数、<br>体积最小、加载最快);<br>spatial按空间递归切分并生成<br>LOD层级瓦片,远景渲染粗层、<br>近景refine细层,<br>适合大体量场景的漫游剔除,<br>体积约为material的4倍,<br>同精度模型下收益有限。<br>|String|material|否|
 |--textureAtlas|--ta|启用纹理图集优化:<br>将可合并材质的贴图按尺寸分桶<br>合成2的幂网格图集页并重映射UV,<br>减少材质数与draw call;<br>非2的幂贴图重采样至最近2的幂。<br>仅baseColor贴图、UV在[0,1]内的<br>材质参与合并。|Boolean|true|否|
 |--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|true|否|
 |--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|true|否|
@@ -88,15 +88,14 @@ node main.js -i ./model.obj
 
 ## 调参建议
 
-瓦片策略(`--split` / `--tileSize`)的收益取决于**浏览方式**,按场景选择:
+瓦片策略(`--split`)的选择取决于**模型精度结构与浏览方式**:
 
 | 场景 | 推荐配置 | 原因 |
 |---|---|---|
-| 全景展示、单体小模型(如单台设备) | `-s material` | 按材质顺序装填,draw call 恒为材质数(理论下限),文件最小 |
-| 大场景漫游、室内浏览 | 默认空间切分 | 视野收窄时只绘制可见瓦片,draw call 持续下降 |
-| 大模型 + 深度漫游 | `--ts 2~4` | 空间切分的收益 = 瓦片粒度 × 视野占比,百米级模型默认 10MB 粒度偏粗,调小后视锥剔除更敏感 |
+| 单精度精细模型(默认情况) | `-s material`(默认) | draw call 恒为材质数(理论下限),体积最小、加载最快、行为可预期 |
+| 大体量场景 + 漫游剔除 | `-s spatial` | 生成LOD层级瓦片:远景渲染粗层(根瓦片图元数等于材质切分下限),镜头推进逐分支refine近景细层 |
 
-粒度调细的代价:瓦片数与文件数增多、同材质在多个瓦片重复出现(全景时 draw call 总量升高)。环形/碗状模型(体育场等)通用切分只能产生粗大条块,深度漫游建议直接调小 `--tileSize`。
+说明:当前粗层与细层为**同一精度的几何**(仅聚合粒度不同),spatial 模式体积约为 material 的 4 倍,近景 draw call 略高于 material——它的完整收益依赖多精度简化(粗层真减三角形),适合确认需要漫游剔除的大场景再启用;配合 `--ts 2~4` 调细叶子粒度可增强剔除敏感性。
 
 ## 输出结构
 
