@@ -1,6 +1,9 @@
 # modelTo3DTiles
 
-将普通精细模型转换为 [3D Tiles](https://github.com/CesiumGS/3d-tiles) 的命令行工具,面向 [Cesium](https://cesium.com/platform/cesiumjs/) 加载,支持 `.obj`、`.fbx`、`.gltf`、`.glb` 格式。
+[![npm version](https://img.shields.io/npm/v/@lijuhong1981%2Fmodelto3dtiles)](https://www.npmjs.com/package/@lijuhong1981/modelto3dtiles)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+
+将普通精细模型转换为 [3D Tiles](https://github.com/CesiumGS/3d-tiles) 的命令行工具,可在 [Cesium](https://cesium.com/platform/cesiumjs/) 或 three.js 中加载,支持 `.obj`、`.fbx`、`.gltf`、`.glb` 格式。
 
 ## 特性
 
