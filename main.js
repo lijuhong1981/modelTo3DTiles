@@ -92,6 +92,7 @@ const argv = yargs
             default: false,
         },
         draco: {
+            alias: "d",
             describe: "启用Draco几何压缩(KHR_draco_mesh_compression),瓦片体积大幅下降,加载端由Cesium自动解码;含featureId属性,与构件拾取兼容。",
             type: "boolean",
             default: false,
