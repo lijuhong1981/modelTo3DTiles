@@ -86,6 +86,18 @@ node main.js -i ./model.obj
 
 另有面向 obj 材质转换的高级参数(透传自 obj2gltf,一般无需设置):`--checkTransparency`、`--packOcclusion`、`--metallicRoughness`、`--specularGlossiness`、`--unlit`,详见 `modelTo3DTiles -h`。
 
+## 调参建议
+
+瓦片策略(`--spatialSplit` / `--tileSize`)的收益取决于**浏览方式**,按场景选择:
+
+| 场景 | 推荐配置 | 原因 |
+|---|---|---|
+| 全景展示、单体小模型(如单台设备) | `--no-ss` | 按材质顺序装填,draw call 恒为材质数(理论下限),文件最小 |
+| 大场景漫游、室内浏览 | 默认空间切分 | 视野收窄时只绘制可见瓦片,draw call 持续下降 |
+| 大模型 + 深度漫游 | `--ts 2~4` | 空间切分的收益 = 瓦片粒度 × 视野占比,百米级模型默认 10MB 粒度偏粗,调小后视锥剔除更敏感 |
+
+粒度调细的代价:瓦片数与文件数增多、同材质在多个瓦片重复出现(全景时 draw call 总量升高)。环形/碗状模型(体育场等)通用切分只能产生粗大条块,深度漫游建议直接调小 `--tileSize`。
+
 ## 输出结构
 
 ```
