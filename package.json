@@ -10,7 +10,8 @@
   "files": [
     "main.js",
     "lib/",
-    "dist/",
+    "dist/*.js",
+    "dist/*.wasm",
     "README.md",
     "LICENSE"
   ],
