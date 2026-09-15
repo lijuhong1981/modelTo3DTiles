@@ -39,14 +39,14 @@ npm run build:esbuild
 ## 使用
 
 ```bash
-# 基本转换(obj/fbx/gltf/glb 均可)
+# 基本转换(obj/fbx/gltf/glb 均可),默认已启用纹理图集与Draco压缩
 node main.js -i ./model.obj
 
 # 指定输出目录与经纬度(默认 116.4074,39.9042)
 node main.js -i ./model.fbx -o ./output --lla 106.55,29.56,0
 
-# 发布推荐配置:纹理图集 + Draco 压缩
-node main.js -i ./model.gltf -o ./output --textureAtlas --draco
+# 追求最高画质、加载端零解码开销:关闭Draco压缩与纹理图集
+node main.js -i ./model.gltf -o ./output --no-draco --no-ta
 ```
 
 exe 与 npm 全局安装的用法相同,将 `node main.js` 换为 `modelTo3DTiles`,所有参数均可使用。
@@ -67,9 +67,9 @@ exe 与 npm 全局安装的用法相同,将 `node main.js` 换为 `modelTo3DTile
 |--correctCenter|--cc|自动修正模型锚点至模型<br>包围盒中心点,<br>修正后经纬度对应包围盒中心。|Boolean|true|否|
 |--b3dm||以b3dm容器输出瓦片,<br>3D Tiles经典格式,兼容传统前端;<br>关闭则输出glTF瓦片(3D Tiles 1.1)。|Boolean|true|否|
 |--spatialSplit|-ss|按空间递归切分瓦片,<br>空间聚集便于视锥剔除;<br>关闭则按材质顺序装填,<br>适合单体小模型<br>(不做几何切分、保留索引几何)。|Boolean|true|否|
-|--textureAtlas|--ta|启用纹理图集优化:<br>将可合并材质的贴图按尺寸分桶<br>合成2的幂网格图集页并重映射UV,<br>减少材质数与draw call;<br>非2的幂贴图重采样至最近2的幂。<br>仅baseColor贴图、UV在[0,1]内的<br>材质参与合并。|Boolean|false|否|
-|--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|false|否|
-|--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|false|否|
+|--textureAtlas|--ta|启用纹理图集优化:<br>将可合并材质的贴图按尺寸分桶<br>合成2的幂网格图集页并重映射UV,<br>减少材质数与draw call;<br>非2的幂贴图重采样至最近2的幂。<br>仅baseColor贴图、UV在[0,1]内的<br>材质参与合并。|Boolean|true|否|
+|--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|true|否|
+|--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|true|否|
 |--mergePrimitive|-mp|设置是否合并材质相同的网格图元。|Boolean|true|否|
 |--tileSize|-ts|设置期望的单个瓦片存储容量,<br>单位mb。|Number|10|否|
 |--clampToGround|--ctg|设置模型是否自动贴地,<br>为true时altitude属性失效。|Boolean|true|否|
@@ -109,7 +109,7 @@ handler.setInputAction(movement => {
 
 ```bash
 npm install
-npm run build        # esbuild打包 + pkg封装为 node18-win-x64 可执行文件
+npm run build        # esbuild打包 + pkg封装为 node22-win-x64 可执行文件
 ```
 
 ## License

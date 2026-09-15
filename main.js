@@ -83,19 +83,19 @@ const argv = yargs
             alias: "ta",
             describe: "启用纹理图集优化:可合并材质的贴图按尺寸分桶合成2的幂图集页并重映射UV,减少材质数与draw call;非2的幂贴图重采样至最近2的幂。仅baseColor贴图、UV在[0,1]内的材质参与合并。",
             type: "boolean",
-            default: false,
+            default: true,
         },
         resampleTextures: {
             alias: "rst",
             describe: "将非2的幂贴图重采样至最近2的幂(含全部贴图槽位),避免Cesium将NPOT纹理放大到下一2次幂导致显存膨胀;启用textureAtlas时无需单独开启。",
             type: "boolean",
-            default: false,
+            default: true,
         },
         draco: {
             alias: "d",
             describe: "启用Draco几何压缩(KHR_draco_mesh_compression),瓦片体积大幅下降,加载端由Cesium自动解码;含featureId属性,与构件拾取兼容。",
             type: "boolean",
-            default: false,
+            default: true,
         },
         mergePrimitive: {
             alias: "mp",
