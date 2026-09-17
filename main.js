@@ -4,6 +4,7 @@ const path = require("path");
 const v8 = require('v8');
 const yargs = require("yargs");
 const defined = require("./lib/defined");
+const { loadInputMetadata } = require("./lib/inputMetadata");
 const modelTo3DTiles = require("./dist/modelTo3DTiles");
 
 // console.log(__filename, __dirname);
@@ -37,6 +38,20 @@ const argv = yargs
             alias: "o",
             describe: "设置模型输出目录,不填则在模型文件目录下自动创建一个3dtiles目录。",
             type: "string",
+        },
+        inputMetadata: {
+            alias: "im",
+            describe: "输入BIM语义sidecar(meta.json),将构件的BIM属性(名称/元素ID/类别/类型/楼层/参数集)写入瓦片内EXT_structural_metadata多列属性表,支持加载端按构件查询与按楼层/类别过滤。meta.json由revitTo3DTiles插件生成,其elements的键需与glTF节点名(构件唯一键)对应。",
+            type: "string",
+            coerce: function (p) {
+                if (!defined(p)) {
+                    return undefined;
+                }
+                if (p.length === 0) {
+                    throw new Error("InputMetadata path must be a file name");
+                }
+                return path.resolve(p);
+            },
         },
         inputUpAxis: {
             alias: "iua",
@@ -212,6 +227,12 @@ const options = {
     specularGlossiness: argv.specularGlossiness,
     unlit: argv.unlit,
 };
+
+// 解析BIM语义sidecar为属性表描述符，随瓦片写入EXT_structural_metadata多列属性表
+if (defined(argv.inputMetadata)) {
+    options.metadata = loadInputMetadata(argv.inputMetadata);
+    console.log('加载元数据: ' + argv.inputMetadata);
+}
 
 // 各格式加载器已将模型统一归一化为Y-up朝向（glTF规范为Y-up；FBX按文件声明的UpAxis转换；obj按--inputUpAxis转换，默认Z-up），
 // GLB内容按Y-up导出，Cesium渲染时自动转换为Z-up，因此默认无需旋转；--rotation仅作为手动覆盖。

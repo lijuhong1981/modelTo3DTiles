@@ -70,6 +70,7 @@ node main.js -i ./model.obj
 |--version|-v|显示版本号|Boolean||否|
 |--input|-i|输入模型路径|String||是|
 |--output|-o|模型输出目录,<br>不填则在模型文件目录下自动创建一个3dtiles目录。|String||否|
+|--inputMetadata|--im|输入BIM语义sidecar(meta.json),<br>将构件的BIM属性(名称/元素ID/<br>类别/类型/楼层/参数集)写入瓦片内<br>EXT_structural_metadata多列属性表,<br>支持加载端按构件查询与<br>按楼层/类别过滤。<br>meta.json由revitTo3DTiles插件生成,<br>其elements键需与glTF节点名<br>(构件唯一键)对应。|String||否|
 |--inputUpAxis|--iua|设置输入模型的向上坐标轴,<br>[可选值:X,Y,Z,-X,-Y,-Z]<br>obj默认按Z-up处理并自动转换,<br>fbx默认读取文件GlobalSettings声明的UpAxis,<br>gltf/glb按规范固定为Y-up。|String|见描述|否|
 |--rotation|-r|手动设置模型旋转角度,<br>格式为[x,y,z],单位为度。<br>坐标轴朝向已自动归一化,<br>仅当模型存在轴向以外的偏转<br>(如偏离正北)时才需要设置。|String||否|
 |--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String|116.4074,<br>39.9042,0|否|
