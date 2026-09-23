@@ -181,7 +181,7 @@ tiles.update();
 
 - 启用 `--draco` 时务必配置 `DRACOLoader`(b3dm 容器需自行剥离 28 字节头再交由 GLTFLoader,建议直接用 `--no-b3dm`);
 - `textures/` 目录需与瓦片同目录部署(外置贴图按相对路径解析);
-- 构件拾取扩展(`EXT_mesh_features`)threejs 不识别会忽略,构件名保留在 glTF 节点名中,可按 `object.name` 检索。
+- **构件拾取**:GLTFLoader 不识别 `EXT_mesh_features`/`EXT_instance_features` 扩展,但 `_FEATURE_ID_0` 属性会保留在几何体上——实例化构件(`EXT_mesh_gpu_instancing`)被渲染为 `InstancedMesh`,拾取用 `intersection.instanceId` 读实例属性 `geometry.getAttribute('_FEATURE_ID_0')`(loader 原样保留实例语义大小写);合并网格为逐顶点属性,但 loader 会把自定义顶点语义**小写化**为 `_feature_id_0`,拾取用 `intersection.face.a` 顶点索引。构件名称/属性可自行解码 GLB JSON 块中 `EXT_structural_metadata` 的属性表(stringOffsets 均为 BIN 块内偏移)。
 
 ## 从源码构建 exe
 
