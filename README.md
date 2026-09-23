@@ -13,7 +13,9 @@
 - **纹理图集**:可合并材质的贴图合成 2 的幂图集页并重映射 UV,显著减少 draw call
 - **贴图外置去重**:瓦片间共享贴图文件(按内容哈希),避免重复下载与显存占用
 - **Draco 几何压缩**:瓦片几何体积压缩约 90%,加载端由 Cesium 自动解码
-- **构件级拾取**:输出附带 `EXT_mesh_features` / `EXT_structural_metadata` 扩展,Cesium 中可按构件(如单个座椅)拾取、查询、显隐、着色
+- **实例化保留**:glTF 输入中共享几何的实例构件(如族实例)以 `EXT_mesh_gpu_instancing` + `EXT_instance_features` 输出,只存一份几何 + 每实例矩阵表,体积与转换内存大幅下降,逐构件拾取/显隐不受影响(需 CesiumJS ≥ 1.107)
+- **BIM 语义属性**:配合 revitToGltf 插件导出的 `.metadata` sidecar(`--md`),构件的名称/元素ID/类别/族/类型/楼层/参数集写入 `EXT_structural_metadata` 多列属性表,支持按构件查询与按楼层/类别过滤
+- **构件级拾取**:输出附带 `EXT_mesh_features` / `EXT_structural_metadata` 扩展,Cesium 中可按构件(如单个座椅)拾取、查询、显隐、着色;同一构件的多个图元归并为单一 featureId
 - **b3dm / glb 双格式**:默认 b3dm(3D Tiles 经典格式),可切换 glb 瓦片(3D Tiles 1.1)
 
 ## 安装
@@ -47,6 +49,9 @@ npm 全局安装或 exe 方式下,直接使用 `modelTo3DTiles` 命令:
 # 基本转换(obj/fbx/gltf/glb 均可),默认已启用纹理图集与Draco压缩
 modelTo3DTiles -i ./model.obj
 
+# BIM模型:连同revitToGltf导出的.metadata一起转换,构件属性随瓦片写入属性表
+modelTo3DTiles -i ./station.glb --md ./station.metadata
+
 # 指定输出目录与经纬度(默认 116.4074,39.9042)
 modelTo3DTiles -i ./model.fbx -o ./output --lla 106.55,29.56,0
 
@@ -70,7 +75,7 @@ node main.js -i ./model.obj
 |--version|-v|显示版本号|Boolean||否|
 |--input|-i|输入模型路径|String||是|
 |--output|-o|模型输出目录,<br>不填则在模型文件目录下自动创建一个3dtiles目录。|String||否|
-|--inputMetadata|--im|输入BIM语义sidecar(meta.json),<br>将构件的BIM属性(名称/元素ID/<br>类别/类型/楼层/参数集)写入瓦片内<br>EXT_structural_metadata多列属性表,<br>支持加载端按构件查询与<br>按楼层/类别过滤。<br>meta.json由revitTo3DTiles插件生成,<br>其elements键需与glTF节点名<br>(构件唯一键)对应。|String||否|
+|--metadata|--md|输入BIM语义sidecar(.metadata),<br>将构件的BIM属性(名称/元素ID/<br>类别/族/类型/楼层/参数集)写入瓦片内<br>EXT_structural_metadata多列属性表,<br>支持加载端按构件查询与<br>按楼层/类别过滤。<br>.metadata由revitToGltf插件导出,<br>其Elements数组的Key字段与<br>glTF节点extras.uniqueId一一对应。|String||否|
 |--inputUpAxis|--iua|设置输入模型的向上坐标轴,<br>[可选值:X,Y,Z,-X,-Y,-Z]<br>obj默认按Z-up处理并自动转换,<br>fbx默认读取文件GlobalSettings声明的UpAxis,<br>gltf/glb按规范固定为Y-up。|String|见描述|否|
 |--rotation|-r|手动设置模型旋转角度,<br>格式为[x,y,z],单位为度。<br>坐标轴朝向已自动归一化,<br>仅当模型存在轴向以外的偏转<br>(如偏离正北)时才需要设置。|String||否|
 |--lngLatAlt|--lla|设置模型经度、纬度、海拔高度,<br>格式为[longitude,latitude,altitude],<br>高度单位为米。|String|116.4074,<br>39.9042,0|否|
@@ -81,6 +86,7 @@ node main.js -i ./model.obj
 |--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|true|否|
 |--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|true|否|
 |--mergePrimitive|-mp|设置是否合并材质相同的网格图元。|Boolean|true|否|
+|--instancing||保留glTF输入的实例化网格<br>(EXT_mesh_gpu_instancing+<br>EXT_instance_features):<br>同几何多构件(如族实例)只存<br>一份几何+每实例矩阵表,<br>体积与转换内存大幅下降,<br>构件拾取/显隐不受影响;<br>仅material拆分模式生效,<br>spatial自动回退为展开。<br>需Cesium 1.107+加载。|Boolean|true|否|
 |--tileSize|-ts|设置期望的单个瓦片存储容量,<br>单位mb。|Number|10|否|
 |--clampToGround|--ctg|设置模型是否自动贴地,<br>为true时altitude属性失效。|Boolean|true|否|
 |--noneTransform|--nt|是否不设置模型变换矩阵,<br>为true时lngLatAlt、clampToGround等<br>属性失效。|Boolean|false|否|
@@ -128,7 +134,7 @@ handler.setInputAction(movement => {
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 ```
 
-版本要求:CesiumJS ≥ 1.104(`Cesium3DTileset.fromUrl` API);构件级拾取(EXT_mesh_features)需 ≥ 1.97,建议直接使用最新版。
+版本要求:CesiumJS ≥ 1.104(`Cesium3DTileset.fromUrl` API);构件级拾取(EXT_mesh_features)需 ≥ 1.97,实例化输出(EXT_mesh_gpu_instancing/EXT_instance_features)需 ≥ 1.107(实测 1.137 可用),建议直接使用最新版。
 
 ## 在 threejs 中使用
 

@@ -39,16 +39,16 @@ const argv = yargs
             describe: "设置模型输出目录,不填则在模型文件目录下自动创建一个3dtiles目录。",
             type: "string",
         },
-        inputMetadata: {
-            alias: "im",
-            describe: "输入BIM语义sidecar(meta.json),将构件的BIM属性(名称/元素ID/类别/类型/楼层/参数集)写入瓦片内EXT_structural_metadata多列属性表,支持加载端按构件查询与按楼层/类别过滤。meta.json由revitTo3DTiles插件生成,其elements的键需与glTF节点名(构件唯一键)对应。",
+        metadata: {
+            alias: "md",
+            describe: "输入BIM语义sidecar(.metadata),将构件的BIM属性(名称/元素ID/类别/族/类型/楼层/参数集)写入瓦片内EXT_structural_metadata多列属性表,支持加载端按构件查询与按楼层/类别过滤。.metadata由revitToGltf插件导出,其Elements数组的Key字段与glTF节点extras.uniqueId一一对应。",
             type: "string",
             coerce: function (p) {
                 if (!defined(p)) {
                     return undefined;
                 }
                 if (p.length === 0) {
-                    throw new Error("InputMetadata path must be a file name");
+                    throw new Error("Metadata path must be a file name");
                 }
                 return path.resolve(p);
             },
@@ -94,6 +94,11 @@ const argv = yargs
             choices: ["spatial", "material"],
             type: "string",
             default: "material",
+        },
+        instancing: {
+            describe: "保留glTF输入的实例化网格(EXT_mesh_gpu_instancing+EXT_instance_features):同几何多构件(如族实例)只存一份几何+每实例矩阵表,体积与转换内存大幅下降,构件拾取/显隐不受影响;仅material拆分模式生效,spatial自动回退为展开。需Cesium 1.107+加载。",
+            type: "boolean",
+            default: true,
         },
         textureAtlas: {
             alias: "ta",
@@ -214,6 +219,7 @@ const options = {
     correctCenter: argv.correctCenter,
     b3dm: argv.b3dm,
     split: argv.split,
+    instancing: argv.instancing,
     textureAtlas: argv.textureAtlas,
     resampleTextures: argv.resampleTextures,
     draco: argv.draco,
@@ -229,9 +235,9 @@ const options = {
 };
 
 // 解析BIM语义sidecar为属性表描述符，随瓦片写入EXT_structural_metadata多列属性表
-if (defined(argv.inputMetadata)) {
-    options.metadata = loadInputMetadata(argv.inputMetadata);
-    console.log('加载元数据: ' + argv.inputMetadata);
+if (defined(argv.metadata)) {
+    options.metadata = loadInputMetadata(argv.metadata);
+    console.log('加载元数据: ' + argv.metadata);
 }
 
 // 各格式加载器已将模型统一归一化为Y-up朝向（glTF规范为Y-up；FBX按文件声明的UpAxis转换；obj按--inputUpAxis转换，默认Z-up），

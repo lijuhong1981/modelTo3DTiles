@@ -1,6 +1,6 @@
 {
   "name": "@lijuhong1981/modelto3dtiles",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "将obj/fbx/gltf/glb精细模型转换为3D Tiles的命令行工具,面向Cesium加载,支持空间切分、纹理图集、Draco压缩与构件级拾取",
   "main": "main.js",
   "bin": {
