@@ -14,7 +14,7 @@
 - **贴图外置去重**:瓦片间共享贴图文件(按内容哈希),避免重复下载与显存占用
 - **Draco 几何压缩**:瓦片几何体积压缩约 90%,加载端由 Cesium 自动解码
 - **实例化保留**:glTF 输入中共享几何的实例构件(如族实例)以 `EXT_mesh_gpu_instancing` + `EXT_instance_features` 输出,只存一份几何 + 每实例矩阵表,体积与转换内存大幅下降,逐构件拾取/显隐不受影响(需 CesiumJS ≥ 1.107)
-- **BIM 语义属性**:配合 revitToGltf 插件导出的 `.metadata` sidecar(`--md`),构件的名称/元素ID/类别/族/类型/楼层/参数集写入 `EXT_structural_metadata` 多列属性表,支持按构件查询与按楼层/类别过滤
+- **BIM 语义属性**:配合 [revitToGltf](https://github.com/lijuhong1981/revitToGltf) 插件导出的 `.metadata` sidecar(`--md`),构件的名称/元素ID/类别/族/类型/楼层/参数集写入 `EXT_structural_metadata` 多列属性表,支持按构件查询与按楼层/类别过滤
 - **构件级拾取**:输出附带 `EXT_mesh_features` / `EXT_structural_metadata` 扩展,Cesium 中可按构件(如单个座椅)拾取、查询、显隐、着色;同一构件的多个图元归并为单一 featureId
 - **b3dm / glb 双格式**:默认 b3dm(3D Tiles 经典格式),可切换 glb 瓦片(3D Tiles 1.1)
 
