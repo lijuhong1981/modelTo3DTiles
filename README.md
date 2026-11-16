@@ -7,12 +7,13 @@
 
 ## 特性
 
-- **多格式输入**:obj(含 mtl/贴图)、fbx(自动读取文件声明的 UpAxis)、gltf/glb(含 Draco 压缩输入)
+- **多格式输入**:obj(含 mtl/贴图)、fbx(自动读取文件声明的 UpAxis)、gltf/glb(含 Draco 压缩输入与 glTF 1.0 自动升级 2.0)
 - **坐标自动归一化**:向上轴自动转换为 glTF 规范的 Y-up,锚点自动修正至模型包围盒中心,支持经纬度定位与自动贴地
 - **空间切分**:瓦片按空间递归切分聚集,视锥剔除按瓦片生效
 - **纹理图集**:可合并材质的贴图合成 2 的幂图集页并重映射 UV,显著减少 draw call
 - **贴图外置去重**:瓦片间共享贴图文件(按内容哈希),避免重复下载与显存占用
 - **Draco 几何压缩**:瓦片几何体积压缩约 90%,加载端由 Cesium 自动解码
+- **未使用元素清理**:输出瓦片自动剔除未引用的材质/节点/网格/accessor 等冗余元素(基于 gltf-pipeline,无论是否启用 Draco 均生效)
 - **实例化保留**:glTF 输入中共享几何的实例构件(如族实例)以 `EXT_mesh_gpu_instancing` + `EXT_instance_features` 输出,只存一份几何 + 每实例矩阵表,体积与转换内存大幅下降,逐构件拾取/显隐不受影响(需 CesiumJS ≥ 1.107)
 - **BIM 语义属性**:配合 [revitToGltf](https://github.com/lijuhong1981/revitToGltf) 插件导出的 `.metadata` sidecar(`--md`),构件的名称/元素ID/类别/族/类型/楼层/参数集写入 `EXT_structural_metadata` 多列属性表,支持按构件查询与按楼层/类别过滤
 - **构件级拾取**:输出附带 `EXT_mesh_features` / `EXT_structural_metadata` 扩展,Cesium 中可按构件(如单个座椅)拾取、查询、显隐、着色;同一构件的多个图元归并为单一 featureId

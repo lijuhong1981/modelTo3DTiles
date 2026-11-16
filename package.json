@@ -67,7 +67,7 @@
     "cesium": "^1.131.0",
     "draco3dgltf": "^1.5.7",
     "fs-extra": "^11.3.3",
-    "gltf-pipeline": "^4.3.0",
+    "gltf-pipeline": "^4.3.1",
     "obj2gltf": "^3.2.0",
     "path": "^0.12.7",
     "sharp": "^0.34.5",
