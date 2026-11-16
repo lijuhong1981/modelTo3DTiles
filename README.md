@@ -14,7 +14,7 @@
 - **贴图外置去重**:瓦片间共享贴图文件(按内容哈希),避免重复下载与显存占用
 - **Draco 几何压缩**:瓦片几何体积压缩约 90%,加载端由 Cesium 自动解码
 - **未使用元素清理**:输出瓦片自动剔除未引用的材质/节点/网格/accessor 等冗余元素(基于 gltf-pipeline,无论是否启用 Draco 均生效)
-- **实例化保留**:glTF 输入中共享几何的实例构件(如族实例)以 `EXT_mesh_gpu_instancing` + `EXT_instance_features` 输出,只存一份几何 + 每实例矩阵表,体积与转换内存大幅下降,逐构件拾取/显隐不受影响(需 CesiumJS ≥ 1.107)
+- **实例化保留**:glTF 输入中共享几何的实例构件(如族实例)以 `EXT_mesh_gpu_instancing` + `EXT_instance_features` 输出,只存一份几何 + 每实例矩阵表,体积与转换内存大幅下降,逐构件拾取/显隐/BIM属性查询不受影响(需 CesiumJS ≥ 1.107)
 - **BIM 语义属性**:配合 [revitToGltf](https://github.com/lijuhong1981/revitToGltf) 插件导出的 `.metadata` sidecar(`--md`),构件的名称/元素ID/类别/族/类型/楼层/参数集写入 `EXT_structural_metadata` 多列属性表,支持按构件查询与按楼层/类别过滤
 - **构件级拾取**:输出附带 `EXT_mesh_features` / `EXT_structural_metadata` 扩展,Cesium 中可按构件(如单个座椅)拾取、查询、显隐、着色;同一构件的多个图元归并为单一 featureId
 - **b3dm / glb 双格式**:默认 b3dm(3D Tiles 经典格式),可切换 glb 瓦片(3D Tiles 1.1)
@@ -66,7 +66,7 @@ modelTo3DTiles -i ./model.gltf -o ./output --no-draco --no-ta
 node main.js -i ./model.obj
 ```
 
-输入模型向上坐标轴自动识别与转换:obj 默认按 Z-up 处理(可用 `--inputUpAxis` 指定),fbx 读取文件 GlobalSettings 声明的 UpAxis,gltf/glb 按规范固定 Y-up。
+输入模型向上坐标轴自动识别与转换:obj 默认按 Z-up 处理(可用 `--inputUpAxis` 指定),fbx 读取文件 GlobalSettings 声明的 UpAxis,gltf/glb 按规范固定 Y-up。glTF 1.0 输入自动升级至 2.0 后转换(旧扩展材质同时转为 PBR),无需额外参数。
 
 ## 命令参数
 
@@ -87,7 +87,7 @@ node main.js -i ./model.obj
 |--resampleTextures|-rst|将非2的幂贴图重采样至<br>最近2的幂(含全部贴图槽位),<br>避免Cesium将NPOT纹理放大到<br>下一2次幂导致显存膨胀;<br>启用textureAtlas时无需单独开启。|Boolean|true|否|
 |--draco|-d|启用Draco几何压缩<br>(KHR_draco_mesh_compression),<br>瓦片体积大幅下降,<br>加载端由Cesium自动解码;<br>含featureId属性,<br>与构件拾取兼容。|Boolean|true|否|
 |--mergePrimitive|-mp|设置是否合并材质相同的网格图元。|Boolean|true|否|
-|--instancing||保留glTF输入的实例化网格<br>(EXT_mesh_gpu_instancing+<br>EXT_instance_features):<br>同几何多构件(如族实例)只存<br>一份几何+每实例矩阵表,<br>体积与转换内存大幅下降,<br>构件拾取/显隐不受影响;<br>仅material拆分模式生效,<br>spatial自动回退为展开。<br>需Cesium 1.107+加载。|Boolean|true|否|
+|--instancing||保留glTF输入的实例化网格<br>(EXT_mesh_gpu_instancing+<br>EXT_instance_features):<br>同几何多构件(如族实例)只存<br>一份几何+每实例矩阵表,<br>体积与转换内存大幅下降,<br>构件拾取/显隐/BIM属性查询<br>不受影响(--md属性表随<br>实例瓦片一并写入);<br>仅material拆分模式生效,<br>spatial自动回退为展开。<br>需Cesium 1.107+加载。|Boolean|true|否|
 |--tileSize|-ts|设置期望的单个瓦片存储容量,<br>单位mb。|Number|10|否|
 |--clampToGround|--ctg|设置模型是否自动贴地,<br>为true时altitude属性失效。|Boolean|true|否|
 |--noneTransform|--nt|是否不设置模型变换矩阵,<br>为true时lngLatAlt、clampToGround等<br>属性失效。|Boolean|false|否|
